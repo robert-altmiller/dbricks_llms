@@ -1,1 +1,8 @@
-# dbricks_llms
+# Simple Example Fine Tuning Large Language T5 Model on Databricks<br><br>
+
+## Step 1: Add Databricks Workspace Instance and PAT
+## Navigate to the databricks_llm folder --> databricks_api folder --> cluster_base.py, and add your Databricks Workspace Instance and Databricks Person Access Token (PAT)<br><br>
+
+## Step 2: Update User Defined Parameters
+## Navigate to the databricks_llm folder --> summarization folder --> t5-11b folder --> data_preparation.py, and update any of the following parameters below:
+[parameters](../readme_images/user_parameters.png)

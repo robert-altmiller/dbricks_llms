@@ -15,13 +15,32 @@
 
 # COMMAND ----------
 
-pip install -r  /Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/summarization/requirements.txt
+# MAGIC %md
+# MAGIC # Install Requirements File
 
 # COMMAND ----------
 
-# library imports
-import os
+# DBTITLE 1,Install Requirements
+pip install -r  /Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/summarization/t5-11b/requirements.txt
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Library Imports
+
+# COMMAND ----------
+
+# DBTITLE 1,Libraries
+# MAGIC %run ../../dbricks_api/libraries"
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # User Defined Parameters
+
+# COMMAND ----------
+
+# DBTITLE 1,Parameters
 # user defined parameters
 externaldatafilename = "amazon_reviews_us_Camera_v1_00.tsv.gz" # external location filename
 externaldatafilepath = f"https://s3.amazonaws.com/amazon-reviews-pds/tsv/{externaldatafilename}" # external data location
@@ -60,47 +79,81 @@ localvalidatedatafilepath = f"{localdatafolderpath}/{localvalidatedatafilename}"
 print(f"localvalidatedatafilepath: {localvalidatedatafilepath}\n")
 
 # set environment variables for bash script
+os.environ["localdatafilepath"] = localdatafilepath
 os.environ["externaldatafilepath"] = externaldatafilepath
 os.environ["localtraindatafilepath"] = localtraindatafilepath
 os.environ["localvalidatedatafilepath"] = localvalidatedatafilepath
 
+# COMMAND ----------
 
+# MAGIC %md
+# MAGIC # Remove Starting DBFS Directory if it Already Exists
 
 # COMMAND ----------
 
-# DBTITLE 1,Remove Starting DBFS Directory if it Already Exists
+# DBTITLE 1,Cleanup and Recreate Directories
 # true removes folder and files recursively and ignores if current data exists
-print(f'removed directory "{localdatafolderpath}": {dbutils.fs.rm(localdatafolderpath, True)}')
-print(f'created directory "{localdatafolderpath}": {dbutils.fs.mkdirs(localdatafolderpath)}')
+print("Remove Starting DBFS Directory if it Already Exists.....")
+print(f'removed directory "{localdatafolderpath}": {dbutils.fs.rm(localdatafolderpath.replace("/dbfs", ""), True)}')
+print(f'created directory "{localdatafolderpath}": {dbutils.fs.mkdirs(localdatafolderpath.replace("/dbfs", ""))}')
 
 # COMMAND ----------
 
-# DBTITLE 1,Download Starting Dataset Using Curl Command
+# MAGIC %md
+# MAGIC # Download Starting Dataset Using Curl Command
+
+# COMMAND ----------
+
+# DBTITLE 1,Download Starting Dataset
 # MAGIC %sh
 # MAGIC 
 # MAGIC for path in $externaldatafilepath 
 # MAGIC   do 
 # MAGIC     externalfilepath="$path" 
 # MAGIC   done
-# MAGIC echo $externaldatafilepath
 # MAGIC 
-# MAGIC curl -s $externaldatafilepath | gunzip > localdatafilepath
+# MAGIC for path in $localdatafilepath 
+# MAGIC   do 
+# MAGIC     localdatafilepath="$path" 
+# MAGIC   done
+# MAGIC echo downloading $externaldatafilepath Using Curl Command.....
+# MAGIC 
+# MAGIC curl -s $externalfilepath | gunzip > $localdatafilepath
+# MAGIC 
+# MAGIC echo $externaldatafilepath downloaded successfully.....
 
 # COMMAND ----------
 
-# DBTITLE 1,Verify Starting Dataset Exists in Databricks File System (DBFS)
+# MAGIC %md
+# MAGIC # Verify Starting Dataset Exists in Databricks File System (DBFS)
+
+# COMMAND ----------
+
+# DBTITLE 1,Verify Starting Dataset Exists
+print("Verify Starting Dataset Exists in Databricks File System (DBFS).....")
 dbutils.fs.ls(localdatafolderpath.replace("/dbfs", ""))
 
 # COMMAND ----------
 
-# DBTITLE 1,Read in the Starting Dataset in Spark Dataframe and Print Dataframe Row Count
+# MAGIC %md
+# MAGIC # Read in the Starting Dataset in Spark Dataframe and Print Dataframe Row Count
+
+# COMMAND ----------
+
+# DBTITLE 1,Read in the Starting Dataset in Spark Dataframe
+print("Read in the Starting Dataset in Spark Dataframe and Print Dataframe Row Count.....")
 camera_reviews_df = spark.read.options(delimiter="\t", header=True).\
   csv(localdatafilepath.replace("/dbfs", "dbfs:"))
 print(f"total records: {camera_reviews_df.count()}")
 
 # COMMAND ----------
 
-# DBTITLE 1,Clean the Starting Dataset of HTML Tags, Escapes and Other Markdown Using Pandas UDFs
+# MAGIC %md
+# MAGIC # Clean the Starting Dataset of HTML Tags, Escapes and Other Markdown Using Pandas UDFs
+
+# COMMAND ----------
+
+# DBTITLE 1,Clean Starting Dataset
 # The data needs a little cleaning because it contains HTML tags, escapes, and other markdown that isn't worth handling further. Simply replace these with spaces in a UDF.
 # The functions below also limit the number of tokens in the result, and try to truncate the review to end on a sentence boundary. 
 # This makes the resulting review more realistic to learn from; it shouldn't end in the middle of a sentence.
@@ -151,19 +204,36 @@ camera_reviews_df.select("product_id", "review_body", "review_headline").\
 
 # COMMAND ----------
 
-# DBTITLE 1,Verify Cleaned Dataset Exists in Databricks File System (DBFS)
+# MAGIC %md
+# MAGIC # Verify Cleaned Dataset Exists in Databricks File System (DBFS)
+
+# COMMAND ----------
+
+# DBTITLE 1,Verify Cleaned Dataset Exists
+print("Verify Cleaned Dataset Exists in Databricks File System (DBFS).....")
 dbutils.fs.ls(localdatacleanedfolderpath.replace("/dbfs",""))
 
 # COMMAND ----------
 
-# DBTITLE 1,Read the Cleaned Dataset in Spark Dataframe and Display Results
+# MAGIC %md
+# MAGIC # Read the Cleaned Dataset in Spark Dataframe and Display Results
+
+# COMMAND ----------
+
+# DBTITLE 1,Read the Cleaned Dataset in Spark DF
+print("Read the Cleaned Dataset in Spark Dataframe and Display Results.....")
 camera_reviews_cleaned_df = spark.read.format("delta").load(localdatacleanedfolderpath.replace("/dbfs", "")).\
   select("review_body", "review_headline").toDF("text", "summary")
 display(camera_reviews_cleaned_df.limit(10))
 
 # COMMAND ----------
 
-# DBTITLE 1,Split the Cleaned Dataset into Training and Validation Datasets
+# MAGIC %md
+# MAGIC # Split the Cleaned Dataset into Training and Validation Datasets
+
+# COMMAND ----------
+
+# DBTITLE 1,Create Training and Validation Datasets
 # Fine-tuning will need this data as simple csv files. Split the data into train/validation sets and write as CSV for later
 
 train_df, val_df = camera_reviews_cleaned_df.randomSplit([train_test_split_val, 1 - train_test_split_val], seed = seed_val)
@@ -172,5 +242,11 @@ val_df.toPandas().to_csv(localvalidatedatafilepath, index = False)
 
 # COMMAND ----------
 
-# DBTITLE 1,Verify Training, and Validation Datasets Exists in Databricks File System (DBFS)
+# MAGIC %md
+# MAGIC # Verify Training, and Validation Datasets Exists in Databricks File System (DBFS)
+
+# COMMAND ----------
+
+# DBTITLE 1,Verify Training and Validation Datasets Exist
+print("Verify Training, and Validation Datasets Exists in Databricks File System (DBFS).....")
 dbutils.fs.ls(localdatafolderpath.replace("/dbfs",""))
