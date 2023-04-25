@@ -1,4 +1,4 @@
-# Simple Fully Parameterized Example Fine Tuning Large Language T5 Model on Databricks<br><br>
+# Simple Fully Parameterized Example Fine Tuning Large Language T5 Model on Databricks for Summarization<br><br>
 
 ## Step 1: Add Databricks Workspace Instance and PAT
 ## Navigate to the following folder:
