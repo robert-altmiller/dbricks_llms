@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Fine-Tuning with t5-small
+# MAGIC # Fine-Tuning with T5-Small Transformer Model
 # MAGIC ## This demonstrates basic fine-tuning with the `t5-small` model.  GPU cluster is created automatically and deleted at the end using the databricks cluster api 2.0.
 
 # COMMAND ----------
@@ -61,7 +61,7 @@ print(f"gpu '{cluster_name}' cluster id: {clusterid}")
 # MAGIC %md
 # MAGIC # Model Fine Tuning Step
 # MAGIC ## The `run_summarization.py` script is simply obtained from [transformers examples](https://github.com/huggingface/transformers/blob/main/examples/pytorch/summarization/run_summarization.py)
-# MAGIC ## There is a copy of it locally for you already in dbricks_llms folder --> summarization folder
+# MAGIC ## There is a copy of it locally for you already in dbricks_llms folder --> summarization (t5-11b) --> hf_fine_tuning_script folder
 
 # COMMAND ----------
 
@@ -73,24 +73,28 @@ print(f"gpu '{cluster_name}' cluster id: {clusterid}")
 # MAGIC   do 
 # MAGIC     huggingface_tuning_script_path="$path" 
 # MAGIC   done
+# MAGIC echo $huggingface_tuning_script_path
 # MAGIC 
 # MAGIC # huggingface tuned model path
 # MAGIC for path in $huggingface_tuned_model_path 
 # MAGIC   do 
 # MAGIC     huggingface_tuned_model_path="$path" 
 # MAGIC   done
+# MAGIC echo $huggingface_tuning_script_path
 # MAGIC 
 # MAGIC # local train data filepath
 # MAGIC for path in $localtraindatafilepath 
 # MAGIC   do 
 # MAGIC     localtraindatafilepath="$path" 
 # MAGIC   done
+# MAGIC echo $localtraindatafilepath
 # MAGIC 
 # MAGIC # local validate data filepath
 # MAGIC for path in $localvalidatedatafilepath 
 # MAGIC   do 
 # MAGIC     localvalidatedatafilepath="$path" 
 # MAGIC   done
+# MAGIC echo $localvalidatedatafilepath
 # MAGIC 
 # MAGIC python \
 # MAGIC   $huggingface_tuning_script_path \
@@ -185,3 +189,7 @@ summarizer_pipeline(sample_review, truncation = True)
 
 response = delete_cluster(databricks_instance, databricks_pat, clusterid)
 print(f"cluster id: '{clusterid}' permanently deleted; response: {response}")
+
+# COMMAND ----------
+
+

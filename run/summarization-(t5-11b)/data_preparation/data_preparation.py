@@ -172,7 +172,7 @@ def clean_summary_udf(summary):
 # Pick examples that have sufficiently long review and headline (e.g. sample)
 camera_reviews_cleaned_df = camera_reviews_df \
   .select("product_id", "review_headline", "review_body",) \
-  .sample(fraction = camera_reviews_sample_percentage, seed = camera_reviews_sample_seed) \
+  .sample(fraction = camera_reviews_sample_percentage, seed = seed_val) \
   .withColumn("review_headline", clean_summary_udf("review_headline")) \
   .withColumn("review_body", clean_review_udf("review_body")) \
   .filter("LENGTH(review_body) > 0 AND LENGTH(review_headline) > 0")
