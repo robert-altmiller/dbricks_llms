@@ -4,25 +4,16 @@
 
 # COMMAND ----------
 
-# DBTITLE 1,Parameter Settings
-databricks_instance = "<databricks workspace instance>" # format adb-72398748928396.16.azuredatabricks.net (no https://)
-databricks_pat = "<databricks pat>"
-username1 = spark.sql('select current_user() as user').collect()[0]['user'] # firstname.lastname@databricks.com
-username2 = username1.split("@databricks.com")[0] # firstname.lastname
-cluster_name = f"{username2.replace('.', ' ')}'s cluster (g5 gpu)"
-
-# COMMAND ----------
-
 # DBTITLE 1,Databricks Rest API 2.0 - Create Cluster
 def create_cluster(dbricks_instance = None, dbricks_pat = None):
   """create databricks gpu cluster for llm training"""
   jsondata = {
       "autoscale": {
-          "min_workers": 4,
-          "max_workers": 8
+          "min_workers": spark_min_workers,
+          "max_workers": spark_max_workers,
       },
       "cluster_name": cluster_name,
-      "spark_version": "12.2.x-gpu-ml-scala2.12",
+      "spark_version": spark_version,
       "spark_conf": {},
       "aws_attributes": {
           "first_on_demand": 1,
@@ -31,12 +22,12 @@ def create_cluster(dbricks_instance = None, dbricks_pat = None):
           "spot_bid_price_percent": 100,
           "ebs_volume_count": 0
       },
-      "node_type_id": "g5.2xlarge",
-      "driver_node_type_id": "g5.2xlarge",
+      "node_type_id": spark_driver_type,
+      "driver_node_type_id": spark_driver_type,
       "ssh_public_keys": [],
       "custom_tags": {},
       "spark_env_vars": {},
-      "autotermination_minutes": 120,
+      "autotermination_minutes": spark_auto_terminate_mins,
       "enable_elastic_disk": True,
       "cluster_source": "UI",
       "init_scripts": [],

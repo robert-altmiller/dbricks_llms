@@ -1,18 +1,17 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Fine-Tuning with t5-small
-# MAGIC ## This demonstrates basic fine-tuning with the `t5-small` model. This notebook should be run on an instance with 1 Ampere architecture GPU, such as an A10. Use Databricks Runtime 12.2 ML GPU or higher.  
-# MAGIC ## GPU cluster is created automatically and deleted at the end using the databricks cluster api 2.0.
+# MAGIC ## This demonstrates basic fine-tuning with the `t5-small` model.  GPU cluster is created automatically and deleted at the end using the databricks cluster api 2.0.
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Databricks 2.0 API Configuration + Library Imports
+# MAGIC # Databricks 2.0 API Configuration (Cluster) + Library Imports
 
 # COMMAND ----------
 
 # DBTITLE 1,Databricks API Configuration
-# MAGIC %run "../../dbricks_api/cluster_base"
+# MAGIC %run "../dbricks_api/cluster_base"
 
 # COMMAND ----------
 
@@ -45,6 +44,8 @@ if gpu_cluster_exists == False: # create gpu cluster
   response_settings = get_cluster_settings(databricks_instance, databricks_pat, clusterid)
   print(f"gpu '{cluster_name}' created and starting so please switch to it.....")
 
+print(f"gpu '{cluster_name}' cluster id: {clusterid}")
+
 # COMMAND ----------
 
 # MAGIC %md
@@ -53,38 +54,7 @@ if gpu_cluster_exists == False: # create gpu cluster
 # COMMAND ----------
 
 # DBTITLE 1,Data Preparation
-# MAGIC %run "./data_preparation"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC # Set additional environment variables to enable integration between Hugging Face's training and MLflow hosted in Databricks (and make sure to use the shared cache again!).  
-# MAGIC ## You can also set `HF_MLFLOW_LOG_ARTIFACTS` to have it log all checkpoints to MLflow, but they can be large.
-
-# COMMAND ----------
-
-# DBTITLE 1,Notebook Parameters (Don't Change)
-# tuned model parameters
-tuned_model_path = f"/dbfs/tmp/{username}/review/t5-small-summary"
-num_beams = 10
-min_new_tokens = 50
-batch_size = 8
-
-# hugging face and ml flow parameters
-pipeline_desc = "summarization"
-ml_flow_run_name = "t5-small-fine-tune-reviews"
-ml_flow_experiment_path = "/Users/sean.owen@databricks.com/fine-tuning-t5"
-ml_flow_registered_model_name = "sean_t5_small_fine_tune_reviews"
-ml_flow_artifact_name = "review_summarizer"
-
-# environment variables (do not change)
-os.environ["huggingface_tuned_model_path"] = tuned_model_path
-os.environ["huggingface_tuning_script_path"] = f"/Workspace/Repos/{username}/dbricks_llms/summarization/t5-11b/run_summarization.py"
-os.environ['DATABRICKS_TOKEN'] = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
-os.environ['DATABRICKS_HOST'] = "https://" + spark.conf.get("spark.databricks.workspaceUrl")
-os.environ['TRANSFORMERS_CACHE'] = f"/dbfs/tmp/{username}/cache/hf"
-os.environ['MLFLOW_EXPERIMENT_NAME'] = f"/Users/{username}/fine-tuning-t5"
-os.environ['MLFLOW_FLATTEN_PARAMS'] = "true"
+# MAGIC %run "./data_preparation/data_preparation"
 
 # COMMAND ----------
 
@@ -95,7 +65,7 @@ os.environ['MLFLOW_FLATTEN_PARAMS'] = "true"
 
 # COMMAND ----------
 
-# DBTITLE 1,Run Model Fine Tuning (Takes 55 - 60 Minutes to Complete)
+# DBTITLE 1,Run Model Fine Tuning (Takes 55 - 60 Minutes to Complete With Current GPU Cluster Settings)
 # MAGIC %sh
 # MAGIC 
 # MAGIC # huggingface tuning script path
@@ -122,27 +92,28 @@ os.environ['MLFLOW_FLATTEN_PARAMS'] = "true"
 # MAGIC     localvalidatedatafilepath="$path" 
 # MAGIC   done
 # MAGIC 
-# MAGIC export DATABRICKS_TOKEN && export DATABRICKS_HOST && export MLFLOW_EXPERIMENT_NAME && export MLFLOW_FLATTEN_PARAMS && python \
-# MAGIC     $huggingface_tuning_script_path \
-# MAGIC     --model_name_or_path t5-small \
-# MAGIC     --do_train \
-# MAGIC     --do_eval \
-# MAGIC     --train_file $localtraindatafilepath \
-# MAGIC     --validation_file $localvalidatedatafilepath \
-# MAGIC     --source_prefix "summarize: " \
-# MAGIC     --output_dir $huggingface_tuned_model_path \
-# MAGIC     --optim adafactor \
-# MAGIC     --num_train_epochs 8 \
-# MAGIC     --bf16 \
-# MAGIC     --per_device_train_batch_size 64 \
-# MAGIC     --per_device_eval_batch_size 64 \
-# MAGIC     --predict_with_generate \
-# MAGIC     --run_name "t5-small-fine-tune-reviews"
+# MAGIC python \
+# MAGIC   $huggingface_tuning_script_path \
+# MAGIC   --model_name_or_path t5-small \
+# MAGIC   --do_train \
+# MAGIC   --do_eval \
+# MAGIC   --train_file $localtraindatafilepath \
+# MAGIC   --validation_file $localvalidatedatafilepath \
+# MAGIC   --source_prefix "summarize: " \
+# MAGIC   --output_dir $huggingface_tuned_model_path \
+# MAGIC   --optim adafactor \
+# MAGIC   --num_train_epochs 8 \
+# MAGIC   --bf16 \
+# MAGIC   --per_device_train_batch_size 64 \
+# MAGIC   --per_device_eval_batch_size 64 \
+# MAGIC   --predict_with_generate \
+# MAGIC   --run_name "t5-small-fine-tune-reviews"
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC # View Created Artifacts in DBFS From Model Fine Tuning in Previous Step
+# MAGIC ## note: checkpoint folders (see below) are not needed to use fine tuned model with mlflow if you decide to do so
 
 # COMMAND ----------
 
@@ -213,50 +184,4 @@ summarizer_pipeline(sample_review, truncation = True)
 # COMMAND ----------
 
 response = delete_cluster(databricks_instance, databricks_pat, clusterid)
-print(f"cluster id: '{cluster_id}' permanently deleted; response: {response}")
-
-# COMMAND ----------
-
-# %sh 
-
-# rm -r /tmp/t5-small-summary; 
-# mkdir -p /tmp/t5-small-summary
-# cp /dbfs/tmp/sean.owen@databricks.com/review/t5-small-summary/* /tmp/t5-small-summary
-
-# COMMAND ----------
-
-# DBTITLE 1,This model can even be managed by MLFlow by wrapping up its usage in a simple custom `PythonModel`:
-# # review model class
-# class ReviewModel(mlflow.pyfunc.PythonModel):
-
-#   # load context function
-#   def load_context(self, context):
-#     self.pipeline = pipeline(pipeline_desc, \
-#       model = context.artifacts["pipeline"], tokenizer = context.artifacts["pipeline"], \
-#       num_beams = num_beams, min_new_tokens = min_new_tokens, \
-#       device = 0 if torch.cuda.is_available() else -1)
-
-#   # predict function
-#   def predict(self, context, model_input): 
-#     texts = ("summarize: " + model_input.iloc[:, 0]).to_list()
-#     pipe = self.pipeline(texts, truncation=True, batch_size = batch_size)
-#     return pd.Series([s['summary_text'] for s in pipe])
-
-
-# # setup mlflow experiment
-# mlflow.set_experiment(ml_flow_experiment_path)
-# last_run_id = mlflow.search_runs(filter_string = f"tags.mlflow.runName = {ml_flow_run_name}")['run_id'].item()
-
-# # mlfow start run
-# with mlflow.start_run(run_id = last_run_id):
-#   mlflow.pyfunc.log_model
-#   (
-#     artifacts = {"pipeline": "/tmp/t5-small-summary"}, 
-#     artifact_path = ml_flow_artifact_name, 
-#     python_model = ReviewModel(),
-#     registered_model_name = ml_flow_registered_model_name
-#   )
-
-# COMMAND ----------
-
-# MAGIC %md Copy everything but the checkpoints, which are large and not necessary to serve the model
+print(f"cluster id: '{clusterid}' permanently deleted; response: {response}")

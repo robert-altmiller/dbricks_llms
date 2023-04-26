@@ -1,11 +1,4 @@
 # Databricks notebook source
-# DBTITLE 1,Create an MD5 Hash out of a Python String
-def str_to_md5_hash(inputstr = None):
-  """encode string using md5 hash"""
-  return hashlib.md5(inputstr.encode())
-
-# COMMAND ----------
-
 # DBTITLE 1,Create Databricks File System Folder
 def create_dbfs_folder(folderpath = None):
   """create databricks file system folder"""

@@ -1,14 +1,5 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Fine-Tuning Billion-Parameter Models with Hugging Face and DeepSpeed
-# MAGIC 
-# MAGIC These notebooks accompany the blog of the same name, with more complete listings and basic commentary about the steps. The blog gives fuller context about what is happening.
-# MAGIC 
-# MAGIC **Note:** Throughout these examples, various temp paths are used to store results, under `/dbfs/tmp/`. Change them to whatever location you desire.
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC ## Data Preparation
 # MAGIC 
 # MAGIC This example uses data from the [Amazon Customer Review Dataset](https://s3.amazonaws.com/amazon-reviews-pds/readme.html), or rather just the camera product reviews, as a stand-in for "your" e-commerce site's camera reviews. Simply download it and display:
@@ -21,17 +12,17 @@
 # COMMAND ----------
 
 # DBTITLE 1,Install Requirements
-pip install -r  /Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/summarization/t5-11b/requirements.txt
+pip install -r "/Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/run/summarization (t5-11b)/requirements/requirements.txt"
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Library Imports
+# MAGIC # Databricks 2.0 API Configuration (Cluster) + Library Imports
 
 # COMMAND ----------
 
-# DBTITLE 1,Libraries
-# MAGIC %run ../../dbricks_api/libraries"
+# DBTITLE 1,Cluster and Libraries
+# MAGIC %run ../../dbricks_api/cluster_base"
 
 # COMMAND ----------
 
@@ -41,25 +32,12 @@ pip install -r  /Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/su
 # COMMAND ----------
 
 # DBTITLE 1,Parameters
-# user defined parameters
-externaldatafilename = "amazon_reviews_us_Camera_v1_00.tsv.gz" # external location filename
-externaldatafilepath = f"https://s3.amazonaws.com/amazon-reviews-pds/tsv/{externaldatafilename}" # external data location
-localdbfsfoldername = "review" # name of dbfs folder where all data will be store in databricks
-localdbfscleanedfoldername = "cleaned" # name of dbfs folder where cleaned dataset with be stored in databricks
-localtraindatafilename = "camera_reviews_train.csv" # training dataset filename
-localvalidatedatafilename = "camera_reviews_val.csv" # validation dataset filename
-train_test_split_val = .8 # train, test, split parameters
-seed_val = 42 # train, test, split parameters
-
-# dyanmic databricks user name
-username = spark.sql('select current_user() as user').collect()[0]['user'] # email address or unique username
-
 # external data paths
 print(f"externaldatafilename: {externaldatafilename}")
 print(f"externaldatafilepath: {externaldatafilepath}\n")
 
 # local dbfs raw data paths
-localdatafolderpath = f"/dbfs/tmp/{username}/{localdbfsfoldername}"
+localdatafolderpath = f"{localdbfsbasepath}/{username1}/{localdbfsfoldername}"
 print(f"localdatafolderpath: {localdatafolderpath}")
 localdatafilepath = f"{localdatafolderpath}/{externaldatafilename.replace('.gz', '')}"
 print(f"localdatafilepath: {localdatafilepath}\n")
@@ -136,7 +114,7 @@ dbutils.fs.ls(localdatafolderpath.replace("/dbfs", ""))
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Read in the Starting Dataset in Spark Dataframe and Print Dataframe Row Count
+# MAGIC # Read in the Starting Dataset in Spark Dataframe and Display Results
 
 # COMMAND ----------
 
@@ -145,11 +123,12 @@ print("Read in the Starting Dataset in Spark Dataframe and Print Dataframe Row C
 camera_reviews_df = spark.read.options(delimiter="\t", header=True).\
   csv(localdatafilepath.replace("/dbfs", "dbfs:"))
 print(f"total records: {camera_reviews_df.count()}")
+display(camera_reviews_df)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Clean the Starting Dataset of HTML Tags, Escapes and Other Markdown Using Pandas UDFs
+# MAGIC # Clean the Starting Dataset of HTML Tags, Escapes and Other Markdown and Display Results
 
 # COMMAND ----------
 
@@ -158,10 +137,6 @@ print(f"total records: {camera_reviews_df.count()}")
 # The functions below also limit the number of tokens in the result, and try to truncate the review to end on a sentence boundary. 
 # This makes the resulting review more realistic to learn from; it shouldn't end in the middle of a sentence.
 # The result is just saved as a Delta table.
-
-# library imports
-import re
-from pyspark.sql.functions import udf
 
 
 # Some simple (simplistic) cleaning: remove tags, escapes, newlines
@@ -194,13 +169,22 @@ def clean_summary_udf(summary):
   return clean_text(summary, 20)
 
 
-# Pick examples that have sufficiently long review and headline
-camera_reviews_df.select("product_id", "review_body", "review_headline").\
-  sample(0.1, seed=42).\
-  withColumn("review_body", clean_review_udf("review_body")).\
-  withColumn("review_headline", clean_summary_udf("review_headline")).\
-  filter("LENGTH(review_body) > 0 AND LENGTH(review_headline) > 0").\
-  write.format("delta").mode("overwrite").save(localdatacleanedfolderpath.replace("/dbfs", ""))
+# Pick examples that have sufficiently long review and headline (e.g. sample)
+camera_reviews_cleaned_df = camera_reviews_df \
+  .select("product_id", "review_headline", "review_body",) \
+  .sample(fraction = camera_reviews_sample_percentage, seed = camera_reviews_sample_seed) \
+  .withColumn("review_headline", clean_summary_udf("review_headline")) \
+  .withColumn("review_body", clean_review_udf("review_body")) \
+  .filter("LENGTH(review_body) > 0 AND LENGTH(review_headline) > 0")
+  
+
+# write out the cleaned reviews to DBFS  as a Delta table
+camera_reviews_cleaned_df.write.format("delta").mode("overwrite").save(localdatacleanedfolderpath.replace("/dbfs", ""))
+
+
+print(f"Starting Dataset Has Been Cleaned and Written to DBFS: {localdatacleanedfolderpath}.....")
+print(f"total records: {camera_reviews_cleaned_df.count()}")
+display(camera_reviews_cleaned_df)
 
 # COMMAND ----------
 
@@ -224,6 +208,7 @@ dbutils.fs.ls(localdatacleanedfolderpath.replace("/dbfs",""))
 print("Read the Cleaned Dataset in Spark Dataframe and Display Results.....")
 camera_reviews_cleaned_df = spark.read.format("delta").load(localdatacleanedfolderpath.replace("/dbfs", "")).\
   select("review_body", "review_headline").toDF("text", "summary")
+print(f"total records: {camera_reviews_cleaned_df.count()}")
 display(camera_reviews_cleaned_df.limit(10))
 
 # COMMAND ----------
