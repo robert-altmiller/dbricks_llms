@@ -89,7 +89,7 @@ from transformers import pipeline
 # MAGIC %md
 # MAGIC # Model Fine Tuning Step
 # MAGIC ## The `run_summarization.py` script is simply obtained from [transformers examples](https://github.com/huggingface/transformers/blob/main/examples/pytorch/summarization/run_summarization.py)
-# MAGIC ## There is a copy of it locally for you already in dbricks_llms folder --> summarization (t5-11b) --> hf_fine_tuning_script folder
+# MAGIC ## There is a copy of it locally for you already in dbricks_llms folder --> run folder --> summarization-(t5-11b) folder --> hf_fine_tuning_script folder
 
 # COMMAND ----------
 
@@ -215,5 +215,8 @@ summarizer_pipeline(sample_review, truncation = True)
 
 # COMMAND ----------
 
-response = delete_cluster(databricks_instance, databricks_pat, clusterid)
-print(f"cluster id: '{clusterid}' permanently deleted; response: {response}")
+clusterid = get_cluster_id(databricks_instance, databricks_pat, cluster_name)
+if clusterid != None:
+  response = delete_cluster(databricks_instance, databricks_pat, clusterid)
+  print(f"cluster name: '{cluster_name}' with cluster id {clusterid} permanently deleted; response: {response}")
+else: print(f"cluster {cluster_name} does not exist.....")

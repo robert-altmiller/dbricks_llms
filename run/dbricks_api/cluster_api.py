@@ -57,6 +57,21 @@ def list_clusters(dbricks_instance = None, dbricks_pat = None):
 
 # COMMAND ----------
 
+# DBTITLE 1,Databricks Rest API 2.0 - Get Cluster Id From Cluster Name
+def get_cluster_id(dbricks_instance = None, dbricks_pat = None, cluster_name = None):
+  """get a cluster id from a cluster name"""
+  response = list_clusters(dbricks_instance, dbricks_pat)
+  clusters_json = json.loads(response.text)["clusters"]
+
+  # search for cluster with your name and if it exists start it
+  for cluster in clusters_json:
+    if cluster["cluster_name"] == cluster_name: # gpu cluster exists
+      clusterid = cluster["cluster_id"]
+      return clusterid
+  return None
+
+# COMMAND ----------
+
 # DBTITLE 1,Databricks Rest API 2.0 - Get Cluster Settings
 def get_cluster_settings(dbricks_instance = None, dbricks_pat = None, cluster_id = None):
   """get databricks cluster settings"""
