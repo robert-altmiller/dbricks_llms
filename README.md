@@ -8,14 +8,14 @@ A T5 large language model is a type of natural language processing (NLP) model t
 ## Step 1: Update User Defined Parameters
 ## Navigate to the following folder: <br>
 
-- databricks_llm folder --> data_preparation.py <br>
+- databricks_llm folder --> data_preparation.py file <br>
 - Update any of the following parameters below.  You do not need to update the Databricks Personal Access Token (PAT) or Workspace Instance because they are created or fetched automatically.  If you want to speed up the time it takes to do the fine tuning of the T5 model you can test different gpu spark driver types.<br><br>
 ![user_parameters.png](/readme_images/user_parameters.png)
 
 ## Step 2: Update the Requirements File Location
 ## Navigate to the following folder: <br>
 
-- databricks_llm folder --> run folder --> summarization-(t5-11b) folder --> main.py <br>
+- databricks_llm folder --> run folder --> summarization-(t5-11b) folder --> main.py file <br>
 - Update the location of the requirements file.  This file loads local notebook libraries needing for fine tuning.<br><br>
 ![update_requirements_path.png](/readme_images/update_requirements_path.png)
 
@@ -23,7 +23,7 @@ A T5 large language model is a type of natural language processing (NLP) model t
 ## Step 3: Create and Switch to GPU Cluster
 ## Navigate to the following folder: <br>
 
-- databricks_llm folder --> run folder --> summarization-(t5-11b) folder --> main.py <br>
+- databricks_llm folder --> run folder --> summarization-(t5-11b) folder --> main.py file <br>
 - Attach the notebook to anny existing cluster, and run the first two cells.  After the GPU cluster is created switch to it and continue execution in the main.py notebook.<br><br>
 ![switch_cluster0.png](/readme_images/switch_cluster0.png)
 ![switch_cluster1.png](/readme_images/switch_cluster1.png)
