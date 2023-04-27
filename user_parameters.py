@@ -38,7 +38,7 @@ camera_reviews_sample_percentage = .1 # sample this percent of the original data
 
 # tuned model parameters (change)
 fine_tune_requirements_path = f"/Workspace/Repos/{username1}/dbricks_llms/run/summarization-(t5-11b)/requirements/requirements.txt" # change
-tuned_model_path = f"{localdbfsbasepath}/{username1}/review/t5-small-summary" # change
+tuned_model_path = f"{localdbfsbasepath}/{username1}/{localdbfsfoldername}/t5-small-summary" # change
 pipeline_desc = "summarization" # hugging face pipeline parameters (change)
 num_beams = 10 # change
 min_new_tokens = 50 # change
@@ -46,8 +46,10 @@ batch_size = 8 # change
 
 # environment variable settings for using with %sh (don't change)
 # hf = hugging face
-os.environ['DATABRICKS_TOKEN'] = databricks_pat
-os.environ['DATABRICKS_HOST'] = f"https://{databricks_instance}" # don't change
-os.environ['TRANSFORMERS_CACHE'] = f"{localdbfsbasepath}/{username1}/cache/hf" # don't change
+os.environ["DATABRICKS_TOKEN"] = databricks_pat # don't change
+os.environ["DATABRICKS_HOST"] = f"https://{databricks_instance}" # don't change
+os.environ["MLFLOW_EXPERIMENT_NAME"] = f"/Users/{username1}/fine-tuning-t5" #f"{localdbfsbasepath.replace('/dbfs','')}/{username1}/{localdbfsfoldername}/fine-tuning-t5"
+os.environ["MLFLOW_FLATTEN_PARAMS"] = "true"
+os.environ["TRANSFORMERS_CACHE"] = f"{localdbfsbasepath}/{username1}/cache/hf" # don't change
 os.environ["huggingface_tuned_model_path"] = tuned_model_path # don't change
 os.environ["huggingface_tuning_script_path"] = f"/Workspace/Repos/{username1}/dbricks_llms/run/summarization-(t5-11b)/hf_fine_tuning_script/run_summarization.py" # don't change

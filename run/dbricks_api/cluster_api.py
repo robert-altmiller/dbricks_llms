@@ -1,6 +1,6 @@
 # Databricks notebook source
 # DBTITLE 1,Get Databricks Rest 2.0 Initial Configuration and Base Functions
-# MAGIC %run "./requests_base"
+# MAGIC %run "./config"
 
 # COMMAND ----------
 

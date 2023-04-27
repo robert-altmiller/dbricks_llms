@@ -7,22 +7,12 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Install Requirements File
+# MAGIC # Databricks 2.0 API Configuration (Cluster)
 
 # COMMAND ----------
 
-# DBTITLE 1,Install Requirements
-pip install -r "/Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/run/summarization (t5-11b)/requirements/requirements.txt"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC # Databricks 2.0 API Configuration (Cluster) + Library Imports
-
-# COMMAND ----------
-
-# DBTITLE 1,Cluster and Libraries
-# MAGIC %run ../../dbricks_api/cluster_base"
+# DBTITLE 1,Databricks API Configuration
+# MAGIC %run "../../dbricks_api/cluster_api"
 
 # COMMAND ----------
 

@@ -35,10 +35,3 @@ def check_str_for_substr_and_replace(inputstr = None, substr = None):
     if substr in inputstr:
         return inputstr.replace(substr, '')
     else: return inputstr
-
-# COMMAND ----------
-
-# DBTITLE 1,Url Encoding HTML String Function
-def url_encode_str(inputstr = None):
-  """url encode an input string"""
-  return urllib.parse.quote_plus(inputstr)

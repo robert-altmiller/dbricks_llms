@@ -6,17 +6,17 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Databricks 2.0 API Configuration (Cluster) + Library Imports
+# MAGIC # Databricks 2.0 API Configuration (Cluster)
 
 # COMMAND ----------
 
 # DBTITLE 1,Databricks API Configuration
-# MAGIC %run "../dbricks_api/cluster_base"
+# MAGIC %run "../dbricks_api/cluster_api"
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Check for GPU Cluster or Create GPU Cluster For Fine Tuning
+# MAGIC # Check for GPU Cluster or Create GPU Cluster For Fine Tuning - Continue to Next Step After Switching to GPU Cluster
 
 # COMMAND ----------
 
@@ -49,12 +49,40 @@ print(f"gpu '{cluster_name}' cluster id: {clusterid}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Data Preparation - Proceed With This Step After Switching to GPU Cluster From Previous Step
+# MAGIC # Install Requirements File - Make Sure You Have Switched to the GPU Cluster Before Running This Step
+
+# COMMAND ----------
+
+# DBTITLE 1,Install Requirements
+# MAGIC %pip install -r "/Workspace/Repos/robert.altmiller@databricks.com/dbricks_llms/run/summarization-(t5-11b)/requirements/requirements.txt"
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Library Imports
+
+# COMMAND ----------
+
+# DBTITLE 1,Library Imports
+# pandas and numpy libraries
+import pandas as pd
+# mlflow libraries
+import mlflow, torch
+# spark and hugging face libraries
+from pyspark.sql.types import *
+import pyspark.sql.functions as F
+from pyspark.sql.functions import pandas_udf, udf
+from transformers import pipeline
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Data Preparation
 
 # COMMAND ----------
 
 # DBTITLE 1,Data Preparation
-# MAGIC %run "./data_preparation/data_preparation"
+# MAGIC %run "../summarization-(t5-11b)/data_preparation/data_preparation"
 
 # COMMAND ----------
 
@@ -80,7 +108,7 @@ print(f"gpu '{cluster_name}' cluster id: {clusterid}")
 # MAGIC   do 
 # MAGIC     huggingface_tuned_model_path="$path" 
 # MAGIC   done
-# MAGIC echo $huggingface_tuning_script_path
+# MAGIC echo $huggingface_tuned_model_path
 # MAGIC 
 # MAGIC # local train data filepath
 # MAGIC for path in $localtraindatafilepath 
@@ -189,7 +217,3 @@ summarizer_pipeline(sample_review, truncation = True)
 
 response = delete_cluster(databricks_instance, databricks_pat, clusterid)
 print(f"cluster id: '{clusterid}' permanently deleted; response: {response}")
-
-# COMMAND ----------
-
-
