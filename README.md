@@ -27,8 +27,15 @@ A T5 large language model is a type of natural language processing (NLP) model t
 ## Navigate to the following folder: <br>
 
 - databricks_llm folder --> run folder --> summarization-(t5-11b) folder --> main.py file <br>
-- Attach the notebook to any existing cluster, and run the first two cells.  After the GPU cluster is created switch to it and continue execution in the main.py notebook.  It will take you through the data preparation stage where raw data is landed in the Databricks File System (DBFS), cleaned, and finally split into training and validation datasets, and these datasets are used in the T5 LLM fine tuning process.  Toward the bottom of the main.py notebook you will find how to use the fine tuned T5 model in a simple pipeline with a Pandas User Defined Function (UDF) for summaries in a dataframe, and also how to serve the model up as a real time end point for summarization.<br><br>
+- Attach the notebook to any existing cluster, and run the first two cells.  After the GPU cluster is created switch to it and continue execution in the main.py notebook. <br><br>
 
 ![switch_cluster0.png](/readme_images/switch_cluster0.png)
 ![switch_cluster1.png](/readme_images/switch_cluster1.png)
 ![switch_cluster2.png](/readme_images/switch_cluster2.png)
+
+## Step 4: Continue Execution of the Main.py Notebook
+
+It will take you through the data preparation stage where raw data is landed in the Databricks File System (DBFS), cleaned, and finally split into training and validation datasets, and these datasets are used in the T5 LLM fine tuning step.  Toward the bottom of the main.py notebook you will find how to use the fine tuned T5 model in a simple pipeline with a Pandas User Defined Function (UDF) for summaries in a Spark dataframe, and also how to serve the model up as a real time end point for summarization.<br><br>
+
+![model_fine_tuning.png](/readme_images/model_fine_tuning.png)
+![model_rt_endpoint.png](/readme_images/model_rt_endpoint.png)
