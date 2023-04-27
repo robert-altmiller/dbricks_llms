@@ -19,5 +19,4 @@ A T5 large language model is a type of natural language processing (NLP) model t
 ## Navigate to the following folder: 
 - databricks_llm folder --> run folder --> summarization-(t5-11b) folder --> main.py, and run the first two cells to create the gpu cluster and switch to the gpu cluster.  You will need to wait for the gpu cluster to warm up before switching to it.<br>
 ![switch_cluster1.png](/readme_images/switch_cluster1.png)
-<br>
 ![switch_cluster2.png](/readme_images/switch_cluster2.png)
