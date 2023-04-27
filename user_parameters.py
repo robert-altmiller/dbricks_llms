@@ -37,7 +37,6 @@ seed_val = 42
 camera_reviews_sample_percentage = .1 # sample this percent of the original dataset (change)
 
 # tuned model parameters (change)
-fine_tune_requirements_path = f"/Workspace/Repos/{username1}/dbricks_llms/run/summarization-(t5-11b)/requirements/requirements.txt" # change
 tuned_model_path = f"{localdbfsbasepath}/{username1}/{localdbfsfoldername}/t5-small-summary" # change
 pipeline_desc = "summarization" # hugging face pipeline parameters (change)
 num_beams = 10 # change
